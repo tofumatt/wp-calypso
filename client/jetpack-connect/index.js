@@ -26,17 +26,17 @@ export default function() {
 
 	page(
 		'/jetpack/connect/authorize/:localeOrInterval?',
+		controller.saveQueryObject,
 		controller.maybeNoDirectAccess,
 		controller.redirectWithoutLocaleifLoggedIn,
-		controller.saveQueryObject,
 		controller.authorizeForm
 	);
 
 	page(
 		'/jetpack/connect/authorize/:interval/:locale',
+		controller.saveQueryObject,
 		controller.maybeNoDirectAccess,
 		controller.redirectWithoutLocaleifLoggedIn,
-		controller.saveQueryObject,
 		controller.authorizeForm
 	);
 
