@@ -38,6 +38,7 @@ const domainAvailability = {
 	FORBIDDEN: 'forbidden_domain',
 	FORBIDDEN_SUBDOMAIN: 'forbidden_subdomain',
 	EMPTY_QUERY: 'empty_query',
+	EMPTY_RESULTS: 'empty_results',
 	INVALID_QUERY: 'invalid_query',
 	INVALID: 'invalid_domain',
 	INVALID_TLD: 'invalid_tld',

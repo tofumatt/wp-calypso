@@ -56,6 +56,7 @@ function getAvailabilityNotice( domain, error ) {
 		case domainAvailability.MAPPABLE:
 		case domainAvailability.AVAILABLE:
 		case domainAvailability.PURCHASES_DISABLED:
+		case domainAvailability.EMPTY_RESULTS:
 		case domainAvailability.UNKNOWN:
 			// unavailable domains are displayed in the search results, not as a notice OR
 			// domain registrations are closed, in which case it is handled in parent
