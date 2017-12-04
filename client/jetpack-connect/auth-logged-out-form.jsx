@@ -22,9 +22,15 @@ import LoggedOutFormLinks from 'components/logged-out-form/links';
 import SignupForm from 'components/signup-form';
 import WpcomLoginForm from 'signup/wpcom-login-form';
 import { createAccount as createAccountAction } from 'state/jetpack-connect/actions';
-import { getAuthorizationData } from 'state/jetpack-connect/selectors';
+import {
+	getAuthorizationData,
+	getAuthorizationRemoteQueryData,
+} from 'state/jetpack-connect/selectors';
 import { login } from 'lib/paths';
-import { recordTracksEvent as recordTracksEventAction } from 'state/analytics/actions';
+import {
+	recordTracksEvent as recordTracksEventAction,
+	setTracksAnonymousUserId as setTracksAnonymousUserIdAction,
+} from 'state/analytics/actions';
 
 const debug = debugFactory( 'calypso:jetpack-connect:authorize-form' );
 
@@ -46,6 +52,10 @@ class LoggedOutForm extends Component {
 	};
 
 	componentDidMount() {
+		// set anonymous ID for cross-system analytics
+		if ( this.props.tracksUi ) {
+			this.props.setTracksAnonymousUserId( this.props.tracksUi );
+		}
 		this.props.recordTracksEvent( 'calypso_jpc_signup_view' );
 	}
 
@@ -130,9 +140,11 @@ export { LoggedOutForm as LoggedOutFormTestComponent };
 export default connect(
 	state => ( {
 		authorizationData: getAuthorizationData( state ),
+		tracksUi: get( getAuthorizationRemoteQueryData( state ), '_ui', null ),
 	} ),
 	{
-		recordTracksEvent: recordTracksEventAction,
 		createAccount: createAccountAction,
+		recordTracksEvent: recordTracksEventAction,
+		setTracksAnonymousUserId: setTracksAnonymousUserIdAction,
 	}
 )( localize( LoggedOutForm ) );

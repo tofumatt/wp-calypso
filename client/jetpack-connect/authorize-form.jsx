@@ -14,7 +14,7 @@ import Main from 'components/main';
 import LoggedOutFormLinks from 'components/logged-out-form/links';
 import { getAuthorizationRemoteQueryData } from 'state/jetpack-connect/selectors';
 import { getCurrentUserId } from 'state/current-user/selectors';
-import { recordTracksEvent, setTracksAnonymousUserId } from 'state/analytics/actions';
+import { recordTracksEvent } from 'state/analytics/actions';
 import EmptyContent from 'components/empty-content';
 import MainWrapper from './main-wrapper';
 import HelpButton from './help-button';
@@ -24,27 +24,13 @@ import LoggedOutForm from './auth-logged-out-form';
 
 class JetpackConnectAuthorizeForm extends Component {
 	static propTypes = {
-		authorizationRemoteQueryData: PropTypes.shape( {
-			_ui: PropTypes.string,
-			_ut: PropTypes.string,
-			client_id: PropTypes.string,
-			from: PropTypes.string,
-		} ).isRequired,
+		authorizationRemoteQueryData: PropTypes.object.isRequired,
 		isLoggedIn: PropTypes.bool.isRequired,
 		recordTracksEvent: PropTypes.func.isRequired,
-		setTracksAnonymousUserId: PropTypes.func.isRequired,
 	};
 
 	componentWillMount() {
 		// set anonymous ID for cross-system analytics
-		const { authorizationRemoteQueryData } = this.props;
-		if (
-			authorizationRemoteQueryData &&
-			authorizationRemoteQueryData._ui &&
-			'anon' === authorizationRemoteQueryData._ut
-		) {
-			this.props.setTracksAnonymousUserId( authorizationRemoteQueryData._ui );
-		}
 		this.props.recordTracksEvent( 'calypso_jpc_authorize_form_view' );
 	}
 
@@ -100,8 +86,5 @@ export default connect(
 		authorizationRemoteQueryData: getAuthorizationRemoteQueryData( state ),
 		isLoggedIn: !! getCurrentUserId( state ),
 	} ),
-	{
-		recordTracksEvent,
-		setTracksAnonymousUserId,
-	}
+	{ recordTracksEvent }
 )( localize( JetpackConnectAuthorizeForm ) );
