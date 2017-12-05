@@ -126,4 +126,13 @@ export default {
 		},
 		defaultVariation: 'control',
 	},
+	checklistThankYouPage: {
+		datestamp: '20171204',
+		variations: {
+			active: 50,
+			inactive: 50,
+		},
+		defaultVariation: 'inactive',
+		allowExistingUsers: true,
+	},
 };
