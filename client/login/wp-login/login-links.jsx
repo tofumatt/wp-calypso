@@ -20,7 +20,8 @@ import safeProtocolUrl from 'lib/safe-protocol-url';
 import ExternalLink from 'components/external-link';
 import Gridicon from 'gridicons';
 import { getCurrentUserId } from 'state/current-user/selectors';
-import { recordPageView, recordTracksEvent } from 'state/analytics/actions';
+import { recordPageView } from 'state/analytics/actions';
+import { recordTracksEventWithClientId } from 'state/login/actions';
 import { resetMagicLoginRequestForm } from 'state/login/magic-login/actions';
 import { login } from 'lib/paths';
 import { getCurrentOAuth2Client } from 'state/ui/oauth2-clients/selectors';
@@ -31,7 +32,7 @@ export class LoginLinks extends React.Component {
 		locale: PropTypes.string.isRequired,
 		privateSite: PropTypes.bool,
 		recordPageView: PropTypes.func.isRequired,
-		recordTracksEvent: PropTypes.func.isRequired,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 		resetMagicLoginRequestForm: PropTypes.func.isRequired,
 		translate: PropTypes.func.isRequired,
 		twoFactorAuthType: PropTypes.string,
@@ -39,17 +40,17 @@ export class LoginLinks extends React.Component {
 	};
 
 	recordBackToWpcomLinkClick = () => {
-		this.props.recordTracksEvent( 'calypso_login_back_to_wpcom_link_click' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_back_to_wpcom_link_click' );
 	};
 
 	recordHelpLinkClick = () => {
-		this.props.recordTracksEvent( 'calypso_login_help_link_click' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_help_link_click' );
 	};
 
 	handleLostPhoneLinkClick = event => {
 		event.preventDefault();
 
-		this.props.recordTracksEvent( 'calypso_login_lost_phone_link_click' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_lost_phone_link_click' );
 
 		page( login( { isNative: true, twoFactorAuthType: 'backup' } ) );
 	};
@@ -57,14 +58,14 @@ export class LoginLinks extends React.Component {
 	handleMagicLoginLinkClick = event => {
 		event.preventDefault();
 
-		this.props.recordTracksEvent( 'calypso_login_magic_login_request_click' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_magic_login_request_click' );
 		this.props.resetMagicLoginRequestForm();
 
 		page( login( { isNative: true, twoFactorAuthType: 'link' } ) );
 	};
 
 	recordResetPasswordLinkClick = () => {
-		this.props.recordTracksEvent( 'calypso_login_reset_password_link_click' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_reset_password_link_click' );
 	};
 
 	renderBackLink() {
@@ -186,7 +187,7 @@ const mapState = state => ( {
 
 const mapDispatch = {
 	recordPageView,
-	recordTracksEvent,
+	recordTracksEventWithClientId,
 	resetMagicLoginRequestForm,
 };
 

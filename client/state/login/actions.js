@@ -48,6 +48,7 @@ import {
 	TWO_FACTOR_AUTHENTICATION_UPDATE_NONCE,
 } from 'state/action-types';
 import { getTwoFactorAuthNonce, getTwoFactorUserId } from 'state/login/selectors';
+import { getCurrentOAuth2ClientId } from 'state/ui/oauth2-clients/selectors';
 import { getCurrentUser } from 'state/current-user/selectors';
 import wpcom from 'lib/wp';
 import { addLocaleToWpcomUrl, getLocaleSlug } from 'lib/i18n-utils';
@@ -163,6 +164,21 @@ const getErrorFromWPCOMError = wpcomError => ( {
 	field: 'global',
 	...omit( wpcomError, [ 'error', 'message', 'field' ] ),
 } );
+
+/**
+ * Records the specified event into Tracks with an additional property that denotes the current OAuth client app.
+ *
+ * @param {String} name - event name
+ * @param {Object} properties - event properties
+ * @return {Function} an action thunk
+ */
+export const recordTracksEventWithClientId = ( name, properties ) => ( dispatch, getState ) => {
+	const clientId = getCurrentOAuth2ClientId( getState() );
+
+	dispatch(
+		recordTracksEvent( name, { ...properties, ...( clientId && { client_id: Number( clientId ) } ) } )
+	);
+};
 
 /**
  * Attempt to login a user.
@@ -586,7 +602,7 @@ export const logoutUser = redirectTo => ( dispatch, getState ) => {
  */
 export const getAuthAccountType = usernameOrEmail => dispatch => {
 	dispatch(
-		recordTracksEvent( 'calypso_login_block_login_form_get_auth_type' )
+		recordTracksEventWithClientId( 'calypso_login_block_login_form_get_auth_type' )
 	);
 
 	dispatch( {
@@ -602,7 +618,7 @@ export const getAuthAccountType = usernameOrEmail => dispatch => {
 		};
 
 		dispatch(
-			recordTracksEvent( 'calypso_login_block_login_form_get_auth_type_failure', {
+			recordTracksEventWithClientId( 'calypso_login_block_login_form_get_auth_type_failure', {
 				error_code: error.code,
 				error_message: error.message,
 			} )

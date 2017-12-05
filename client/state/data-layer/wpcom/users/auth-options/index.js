@@ -16,7 +16,7 @@ import {
 	LOGIN_AUTH_ACCOUNT_TYPE_REQUEST_FAILURE,
 } from 'state/action-types';
 import { noRetry } from 'state/data-layer/wpcom-http/pipeline/retry-on-failure/policies';
-import { recordTracksEvent } from 'state/analytics/actions';
+import { recordTracksEventWithClientId } from 'state/login/actions';
 
 export const getAuthAccountType = ( { dispatch }, action ) => {
 	const { usernameOrEmail } = action;
@@ -45,7 +45,7 @@ export const receiveSuccess = ( { dispatch }, action, data ) => {
 	} );
 
 	dispatch(
-		recordTracksEvent( 'calypso_login_block_login_form_get_auth_type_success' )
+		recordTracksEventWithClientId( 'calypso_login_block_login_form_get_auth_type_success' )
 	);
 };
 
@@ -62,7 +62,7 @@ export const receiveError = ( { dispatch }, action, error ) => {
 	} );
 
 	dispatch(
-		recordTracksEvent( 'calypso_login_block_login_form_get_auth_type_failure', {
+		recordTracksEventWithClientId( 'calypso_login_block_login_form_get_auth_type_failure', {
 			error_code: code,
 			error_message: message,
 		} )

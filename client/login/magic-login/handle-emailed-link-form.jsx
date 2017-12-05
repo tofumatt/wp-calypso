@@ -32,9 +32,12 @@ import {
 	getMagicLoginRequestedAuthSuccessfully,
 	isFetchingMagicLoginAuth,
 } from 'state/selectors';
-import { getTwoFactorNotificationSent, isTwoFactorEnabled } from 'state/login/selectors';
+import {
+	getTwoFactorNotificationSent,
+	isTwoFactorEnabled,
+	recordTracksEventWithClientId,
+} from 'state/login/selectors';
 import { getCurrentUser } from 'state/current-user/selectors';
-import { recordTracksEvent } from 'state/analytics/actions';
 
 const user = userFactory();
 
@@ -56,7 +59,7 @@ class HandleEmailedLinkForm extends React.Component {
 
 		// Connected action creators
 		fetchMagicLoginAuthenticate: PropTypes.func.isRequired,
-		recordTracksEvent: PropTypes.func.isRequired,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 		showMagicLoginLinkExpiredPage: PropTypes.func.isRequired,
 	};
 
@@ -106,7 +109,7 @@ class HandleEmailedLinkForm extends React.Component {
 	rebootAfterLogin = () => {
 		const { redirectTo } = this.props;
 
-		this.props.recordTracksEvent( 'calypso_login_success', {
+		this.props.recordTracksEventWithClientId( 'calypso_login_success', {
 			two_factor_enabled: this.props.twoFactorEnabled,
 			magic_login: 1,
 		} );
@@ -175,7 +178,7 @@ class HandleEmailedLinkForm extends React.Component {
 			);
 		}
 
-		this.props.recordTracksEvent( 'calypso_login_email_link_handle_click_view' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_email_link_handle_click_view' );
 
 		return (
 			<EmptyContent
@@ -206,7 +209,7 @@ const mapState = state => {
 
 const mapDispatch = {
 	fetchMagicLoginAuthenticate,
-	recordTracksEvent,
+	recordTracksEventWithClientId,
 	showMagicLoginLinkExpiredPage,
 };
 

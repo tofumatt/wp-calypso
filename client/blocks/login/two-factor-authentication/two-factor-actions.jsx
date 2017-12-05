@@ -14,8 +14,7 @@ import page from 'page';
  */
 import Card from 'components/card';
 import { localize } from 'i18n-calypso';
-import { isTwoFactorAuthTypeSupported } from 'state/login/selectors';
-import { recordTracksEvent } from 'state/analytics/actions';
+import { isTwoFactorAuthTypeSupported, recordTracksEventWithClientId } from 'state/login/selectors';
 import { sendSmsCode } from 'state/login/actions';
 import { login } from 'lib/paths';
 
@@ -23,7 +22,7 @@ class TwoFactorActions extends Component {
 	static propTypes = {
 		isAuthenticatorSupported: PropTypes.bool.isRequired,
 		isSmsSupported: PropTypes.bool.isRequired,
-		recordTracksEvent: PropTypes.func.isRequired,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 		sendSmsCode: PropTypes.func.isRequired,
 		translate: PropTypes.func.isRequired,
 		twoFactorAuthType: PropTypes.string.isRequired,
@@ -32,7 +31,7 @@ class TwoFactorActions extends Component {
 	sendSmsCode = event => {
 		event.preventDefault();
 
-		this.props.recordTracksEvent( 'calypso_login_two_factor_switch_to_sms_link_click' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_two_factor_switch_to_sms_link_click' );
 
 		page( login( { isNative: true, twoFactorAuthType: 'sms' } ) );
 
@@ -42,7 +41,7 @@ class TwoFactorActions extends Component {
 	recordAuthenticatorLinkClick = event => {
 		event.preventDefault();
 
-		this.props.recordTracksEvent( 'calypso_login_two_factor_switch_to_authenticator_link_click' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_two_factor_switch_to_authenticator_link_click' );
 
 		page( login( { isNative: true, twoFactorAuthType: 'authenticator' } ) );
 	};
@@ -88,7 +87,7 @@ export default connect(
 		isSmsSupported: isTwoFactorAuthTypeSupported( state, 'sms' ),
 	} ),
 	{
-		recordTracksEvent,
+		recordTracksEventWithClientId,
 		sendSmsCode,
 	}
 )( localize( TwoFactorActions ) );

@@ -21,14 +21,14 @@ import {
 	getSocialAccountLinkService,
 	getRedirectTo,
 } from 'state/login/selectors';
-import { connectSocialUser } from 'state/login/actions';
-import { recordTracksEvent } from 'state/analytics/actions';
+import { connectSocialUser, recordTracksEventWithClientId } from 'state/login/actions';
 
 class SocialConnectPrompt extends Component {
 	static propTypes = {
 		linkingSocialAuthInfo: PropTypes.object,
 		linkingSocialService: PropTypes.string,
 		onSuccess: PropTypes.func.isRequired,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 		redirectTo: PropTypes.string,
 		translate: PropTypes.func.isRequired,
 	};
@@ -40,14 +40,14 @@ class SocialConnectPrompt extends Component {
 
 		this.props.connectSocialUser( linkingSocialAuthInfo, redirectTo ).then(
 			() => {
-				this.props.recordTracksEvent( 'calypso_login_social_connect_success', {
+				this.props.recordTracksEventWithClientId( 'calypso_login_social_connect_success', {
 					social_account_type: linkingSocialService,
 				} );
 
 				onSuccess();
 			},
 			error => {
-				this.props.recordTracksEvent( 'calypso_login_social_connect_failure', {
+				this.props.recordTracksEventWithClientId( 'calypso_login_social_connect_failure', {
 					social_account_type: linkingSocialService,
 					error_code: error.code,
 					error_message: error.message,
@@ -134,6 +134,6 @@ export default connect(
 	} ),
 	{
 		connectSocialUser,
-		recordTracksEvent,
+		recordTracksEventWithClientId,
 	}
 )( localize( SocialConnectPrompt ) );

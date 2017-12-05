@@ -19,7 +19,8 @@ import { login } from 'lib/paths';
 import { CHECK_YOUR_EMAIL_PAGE } from 'state/login/magic-login/constants';
 import { getMagicLoginCurrentView } from 'state/selectors';
 import { hideMagicLoginRequestForm } from 'state/login/magic-login/actions';
-import { recordPageView, recordTracksEvent } from 'state/analytics/actions';
+import { recordPageView } from 'state/analytics/actions';
+import { recordTracksEventWithClientId } from 'state/login/actions';
 import Main from 'components/main';
 import RequestLoginEmailForm from './request-login-email-form';
 import GlobalNotices from 'components/global-notices';
@@ -30,7 +31,7 @@ class MagicLogin extends React.Component {
 		// mapped to dispatch
 		hideMagicLoginRequestForm: PropTypes.func.isRequired,
 		recordPageView: PropTypes.func.isRequired,
-		recordTracksEvent: PropTypes.func.isRequired,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 
 		// mapped to state
 		showCheckYourEmail: PropTypes.bool.isRequired,
@@ -41,7 +42,8 @@ class MagicLogin extends React.Component {
 
 	onClickEnterPasswordInstead = event => {
 		event.preventDefault();
-		this.props.recordTracksEvent( 'calypso_login_email_link_page_click_back' );
+
+		this.props.recordTracksEventWithClientId( 'calypso_login_email_link_page_click_back' );
 
 		page( login( { isNative: true } ) );
 	};
@@ -78,7 +80,7 @@ const mapState = state => ( {
 const mapDispatch = {
 	hideMagicLoginRequestForm,
 	recordPageView,
-	recordTracksEvent,
+	recordTracksEventWithClientId,
 };
 
 export default connect( mapState, mapDispatch )( localize( MagicLogin ) );

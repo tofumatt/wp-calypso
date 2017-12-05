@@ -20,10 +20,13 @@ import FormLabel from 'components/forms/form-label';
 import FormInputValidation from 'components/forms/form-input-validation';
 import Card from 'components/card';
 import { localize } from 'i18n-calypso';
-import { loginUserWithTwoFactorVerificationCode } from 'state/login/actions';
 import { getTwoFactorAuthRequestError } from 'state/login/selectors';
-import { recordTracksEvent } from 'state/analytics/actions';
-import { sendSmsCode, formUpdate } from 'state/login/actions';
+import {
+	formUpdate,
+	loginUserWithTwoFactorVerificationCode,
+	recordTracksEventWithClientId,
+	sendSmsCode,
+} from 'state/login/actions';
 import TwoFactorActions from './two-factor-actions';
 
 class VerificationCodeForm extends Component {
@@ -31,7 +34,7 @@ class VerificationCodeForm extends Component {
 		formUpdate: PropTypes.func.isRequired,
 		loginUserWithTwoFactorVerificationCode: PropTypes.func.isRequired,
 		onSuccess: PropTypes.func.isRequired,
-		recordTracksEvent: PropTypes.func.isRequired,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 		sendSmsCode: PropTypes.func.isRequired,
 		translate: PropTypes.func.isRequired,
 		twoFactorAuthRequestError: PropTypes.object,
@@ -44,8 +47,8 @@ class VerificationCodeForm extends Component {
 	};
 
 	componentDidMount() {
+		// eslint-disable-next-line react/no-did-mount-set-state
 		this.setState( { isDisabled: false }, () => {
-			// eslint-disable-line react/no-did-mount-set-state
 			this.input.focus();
 		} );
 	}
@@ -84,21 +87,21 @@ class VerificationCodeForm extends Component {
 		const { onSuccess, twoFactorAuthType } = this.props;
 		const { twoStepCode } = this.state;
 
-		this.props.recordTracksEvent( 'calypso_login_two_factor_verification_code_submit' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_two_factor_verification_code_submit' );
 
 		this.setState( { isDisabled: true } );
 
 		this.props
 			.loginUserWithTwoFactorVerificationCode( twoStepCode, twoFactorAuthType )
 			.then( () => {
-				this.props.recordTracksEvent( 'calypso_login_two_factor_verification_code_success' );
+				this.props.recordTracksEventWithClientId( 'calypso_login_two_factor_verification_code_success' );
 
 				onSuccess();
 			} )
 			.catch( error => {
 				this.setState( { isDisabled: false } );
 
-				this.props.recordTracksEvent( 'calypso_login_two_factor_verification_code_failure', {
+				this.props.recordTracksEventWithClientId( 'calypso_login_two_factor_verification_code_failure', {
 					error_code: error.code,
 					error_message: error.message,
 				} );
@@ -189,7 +192,7 @@ export default connect(
 	{
 		formUpdate,
 		loginUserWithTwoFactorVerificationCode,
-		recordTracksEvent,
+		recordTracksEventWithClientId,
 		sendSmsCode,
 	}
 )( localize( VerificationCodeForm ) );

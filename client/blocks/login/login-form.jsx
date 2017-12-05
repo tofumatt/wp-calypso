@@ -30,11 +30,11 @@ import {
 	formUpdate,
 	getAuthAccountType,
 	loginUser,
+	recordTracksEventWithClientId,
 	resetAuthAccountType,
 } from 'state/login/actions';
 import { login } from 'lib/paths';
 import { preventWidows } from 'lib/formatting';
-import { recordTracksEvent } from 'state/analytics/actions';
 import {
 	getAuthAccountType as getAuthAccountTypeSelector,
 	getRequestError,
@@ -60,6 +60,7 @@ export class LoginForm extends Component {
 		oauth2Client: PropTypes.object,
 		onSuccess: PropTypes.func.isRequired,
 		privateSite: PropTypes.bool,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 		redirectTo: PropTypes.string,
 		requestError: PropTypes.object,
 		resetAuthAccountType: PropTypes.func.isRequired,
@@ -122,14 +123,14 @@ export class LoginForm extends Component {
 		}
 
 		if ( ! this.props.hasAccountTypeLoaded && isPasswordlessAccount( nextProps.accountType ) ) {
-			this.props.recordTracksEvent( 'calypso_login_block_login_form_send_magic_link' );
+			this.props.recordTracksEventWithClientId( 'calypso_login_block_login_form_send_magic_link' );
 
 			this.props.fetchMagicLoginRequestEmail( this.state.usernameOrEmail )
 				.then( () => {
-					this.props.recordTracksEvent( 'calypso_login_block_login_form_send_magic_link_success' );
+					this.props.recordTracksEventWithClientId( 'calypso_login_block_login_form_send_magic_link_success' );
 				} )
 				.catch( error => {
-					this.props.recordTracksEvent( 'calypso_login_block_login_form_send_magic_link_failure', {
+					this.props.recordTracksEventWithClientId( 'calypso_login_block_login_form_send_magic_link_failure', {
 						error_code: error.code,
 						error_message: error.message,
 					} );
@@ -168,7 +169,7 @@ export class LoginForm extends Component {
 	resetView = event => {
 		event.preventDefault();
 
-		this.props.recordTracksEvent( 'calypso_login_block_login_form_change_username_or_email' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_block_login_form_change_username_or_email' );
 
 		this.props.resetAuthAccountType();
 	};
@@ -177,16 +178,16 @@ export class LoginForm extends Component {
 		const { password, usernameOrEmail } = this.state;
 		const { onSuccess, redirectTo } = this.props;
 
-		this.props.recordTracksEvent( 'calypso_login_block_login_form_submit' );
+		this.props.recordTracksEventWithClientId( 'calypso_login_block_login_form_submit' );
 
 		this.props.loginUser( usernameOrEmail, password, redirectTo )
 			.then( () => {
-				this.props.recordTracksEvent( 'calypso_login_block_login_form_success' );
+				this.props.recordTracksEventWithClientId( 'calypso_login_block_login_form_success' );
 
 				onSuccess( redirectTo );
 			} )
 			.catch( error => {
-				this.props.recordTracksEvent( 'calypso_login_block_login_form_failure', {
+				this.props.recordTracksEventWithClientId( 'calypso_login_block_login_form_failure', {
 					error_code: error.code,
 					error_message: error.message,
 				} );
@@ -430,7 +431,7 @@ export default connect(
 		formUpdate,
 		getAuthAccountType,
 		loginUser,
-		recordTracksEvent,
+		recordTracksEventWithClientId,
 		resetAuthAccountType,
 	}
 )( localize( LoginForm ) );

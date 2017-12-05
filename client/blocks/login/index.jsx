@@ -20,14 +20,14 @@ import LoginForm from './login-form';
 import {
 	getRedirectTo,
 	getRequestNotice,
-	getTwoFactorNotificationSent,
-	isTwoFactorEnabled,
 	getSocialAccountIsLinking,
 	getSocialAccountLinkService,
+	getTwoFactorNotificationSent,
+	isTwoFactorEnabled,
+	recordTracksEventWithClientId,
 } from 'state/login/selectors';
 import { getCurrentOAuth2Client } from 'state/ui/oauth2-clients/selectors';
 import { isWooOAuth2Client } from 'lib/oauth2-clients';
-import { recordTracksEvent } from 'state/analytics/actions';
 import VerificationCodeForm from './two-factor-authentication/verification-code-form';
 import WaitingTwoFactorNotificationApproval from './two-factor-authentication/waiting-notification-approval';
 import { login } from 'lib/paths';
@@ -42,7 +42,7 @@ class Login extends Component {
 	static propTypes = {
 		oauth2Client: PropTypes.object,
 		privateSite: PropTypes.bool,
-		recordTracksEvent: PropTypes.func.isRequired,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 		redirectTo: PropTypes.string,
 		requestNotice: PropTypes.object,
 		twoFactorAuthType: PropTypes.string,
@@ -113,7 +113,7 @@ class Login extends Component {
 	rebootAfterLogin = () => {
 		const { redirectTo } = this.props;
 
-		this.props.recordTracksEvent( 'calypso_login_success', {
+		this.props.recordTracksEventWithClientId( 'calypso_login_success', {
 			two_factor_enabled: this.props.twoFactorEnabled,
 			social_service_connected: this.props.socialConnect,
 		} );
@@ -284,6 +284,6 @@ export default connect(
 		linkingSocialService: getSocialAccountLinkService( state ),
 	} ),
 	{
-		recordTracksEvent,
+		recordTracksEventWithClientId,
 	}
 )( localize( Login ) );

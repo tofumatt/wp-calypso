@@ -18,8 +18,8 @@ import { noop } from 'lodash';
 import GoogleIcon from 'components/social-icons/google';
 import Popover from 'components/popover';
 import { preventWidows } from 'lib/formatting';
-import { recordTracksEvent } from 'state/analytics/actions';
 import { isFormDisabled } from 'state/login/selectors';
+import { recordTracksEventWithClientId } from 'state/analytics/actions';
 
 class GoogleLoginButton extends Component {
 	static propTypes = {
@@ -28,7 +28,7 @@ class GoogleLoginButton extends Component {
 		scope: PropTypes.string,
 		fetchBasicProfile: PropTypes.bool,
 		uxMode: PropTypes.string,
-		recordTracksEvent: PropTypes.func.isRequired,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 		responseHandler: PropTypes.func.isRequired,
 		translate: PropTypes.func.isRequired,
 		onClick: PropTypes.func,
@@ -156,7 +156,7 @@ class GoogleLoginButton extends Component {
 			.getAuthInstance()
 			.signIn( { prompt: 'select_account' } )
 			.then( responseHandler, error => {
-				this.props.recordTracksEvent( 'calypso_login_social_button_failure', {
+				this.props.recordTracksEventWithClientId( 'calypso_login_social_button_failure', {
 					social_account_type: 'google',
 					error_code: error.error,
 				} );
@@ -239,6 +239,6 @@ export default connect(
 		isFormDisabled: isFormDisabled( state ),
 	} ),
 	{
-		recordTracksEvent,
+		recordTracksEventWithClientId,
 	}
 )( localize( GoogleLoginButton ) );

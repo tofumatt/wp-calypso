@@ -15,13 +15,17 @@ import { localize } from 'i18n-calypso';
  */
 import config from 'config';
 import getCurrentQueryArguments from 'state/selectors/get-current-query-arguments';
-import { loginSocialUser, createSocialUser, createSocialUserFailed } from 'state/login/actions';
+import {
+	createSocialUser,
+	createSocialUserFailed,
+	loginSocialUser,
+	recordTracksEventWithClientId,
+} from 'state/login/actions';
 import {
 	getCreatedSocialAccountUsername,
 	getCreatedSocialAccountBearerToken,
 	isSocialAccountCreating,
 } from 'state/login/selectors';
-import { recordTracksEvent } from 'state/analytics/actions';
 import WpcomLoginForm from 'signup/wpcom-login-form';
 import { InfoNotice } from 'blocks/global-notice';
 import { login } from 'lib/paths';
@@ -29,7 +33,7 @@ import { login } from 'lib/paths';
 class SocialLoginForm extends Component {
 	static propTypes = {
 		createSocialUser: PropTypes.func.isRequired,
-		recordTracksEvent: PropTypes.func.isRequired,
+		recordTracksEventWithClientId: PropTypes.func.isRequired,
 		redirectTo: PropTypes.string,
 		onSuccess: PropTypes.func.isRequired,
 		translate: PropTypes.func.isRequired,
@@ -100,7 +104,7 @@ class SocialLoginForm extends Component {
 	};
 
 	recordEvent = ( eventName, params ) =>
-		this.props.recordTracksEvent( eventName, {
+		this.props.recordTracksEventWithClientId( eventName, {
 			social_account_type: 'google',
 			...params,
 		} );
@@ -159,6 +163,6 @@ export default connect(
 		loginSocialUser,
 		createSocialUser,
 		createSocialUserFailed,
-		recordTracksEvent,
+		recordTracksEventWithClientId,
 	}
 )( localize( SocialLoginForm ) );
