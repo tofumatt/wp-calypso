@@ -43,6 +43,11 @@ class EditContactInfoFormCard extends React.Component {
 		selectedDomain: PropTypes.object.isRequired,
 		selectedSite: PropTypes.oneOfType( [ PropTypes.object, PropTypes.bool ] ).isRequired,
 		currentUser: PropTypes.object.isRequired,
+		needsUpdate: PropTypes.bool,
+	};
+
+	static defaultProps = {
+		needsUpdate: false,
 	};
 
 	constructor( props ) {
@@ -517,6 +522,11 @@ class EditContactInfoFormCard extends React.Component {
 	onWhoisUpdate = ( error, data ) => {
 		this.setState( { formSubmitting: false } );
 		if ( data && data.success ) {
+			const selectedDomainName = get( this.props, 'selectedDomain.name' );
+			if ( this.props.needsUpdate === true && selectedDomainName ) {
+				upgradesActions.fetchWhois( selectedDomainName );
+			}
+
 			if ( ! this.requiresConfirmation() ) {
 				this.props.successNotice(
 					this.props.translate(

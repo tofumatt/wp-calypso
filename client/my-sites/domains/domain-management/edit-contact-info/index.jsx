@@ -40,7 +40,7 @@ class EditContactInfo extends React.Component {
 		}
 
 		return (
-			<Main className="domain-management-edit-contact-info">
+			<Main className="edit-contact-info">
 				<Header
 					onClick={ this.goToContactsPrivacy }
 					selectedDomainName={ this.props.selectedDomainName }
@@ -79,6 +79,7 @@ class EditContactInfo extends React.Component {
 					contactInformation={ findRegistrantWhois( this.props.whois.data ) }
 					selectedDomain={ getSelectedDomain( this.props ) }
 					selectedSite={ this.props.selectedSite }
+					needsUpdate={ !! this.props.whois.needsUpdate }
 				/>
 			</div>
 		);
