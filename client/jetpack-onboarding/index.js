@@ -11,10 +11,15 @@ import { values } from 'lodash';
  */
 import { onboarding } from './controller';
 import { JETPACK_ONBOARDING_STEPS } from './constants';
+import { siteSelection } from '../my-sites/controller';
 
 export default function() {
 	if ( isEnabled( 'jetpack/onboarding' ) ) {
 		const validStepNames = values( JETPACK_ONBOARDING_STEPS );
-		page( `/jetpack/onboarding/:stepName(${ validStepNames.join( '|' ) })?`, onboarding );
+		page(
+			`/jetpack/onboarding/:stepName(${ validStepNames.join( '|' ) })?/:site?`,
+			siteSelection,
+			onboarding
+		);
 	}
 }
