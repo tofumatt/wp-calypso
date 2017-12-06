@@ -13,8 +13,10 @@ import page from 'page';
  */
 import Checklist from 'components/checklist';
 import DocumentHead from 'components/data/document-head';
+import FormattedHeader from 'components/formatted-header';
 import Main from 'components/main';
 import QuerySiteChecklist from 'components/data/query-site-checklist';
+import { requestSiteChecklistTaskUpdate } from 'state/site-checklist/actions';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { getSiteChecklist } from 'state/selectors';
 import { getSiteSlug } from 'state/sites/selectors';
@@ -29,18 +31,26 @@ export class ChecklistThankYou extends PureComponent {
 		receiptId: PropTypes.number,
 	};
 
-	onAction = id => {
+	handleAction = taskId => {
 		const { siteSlug, tasks, track } = this.props;
-		const url = urlForTask( id, siteSlug );
+		const url = urlForTask( taskId, siteSlug );
 		if ( url && tasks.length ) {
-			const status = tasks[ id ] ? 'complete' : 'incomplete';
+			const status = tasks[ taskId ] ? 'complete' : 'incomplete';
 			track( 'calypso_checklist_task_start', {
 				checklist_name: 'thank_you',
-				step_name: id,
+				step_name: taskId,
 				status,
 			} );
 
 			page( url );
+		}
+	};
+
+	handleToggle = taskId => {
+		const { siteId, tasks, update } = this.props;
+
+		if ( tasks && ! tasks[ taskId ] ) {
+			update( siteId, taskId );
 		}
 	};
 
@@ -59,14 +69,21 @@ export class ChecklistThankYou extends PureComponent {
 							src="/calypso/images/signup/confetti.svg"
 							className="checklist-thank-you__confetti"
 						/>
-						<h1 className="checklist-thank-you__title">{ title }</h1>
-						<p className="checklist-thank-you__description">
-							Now that your site has been created, it's time to get it ready for you to share.<br />
-							We've prepared a list of things that will help you get there quickly.
-						</p>
+						<FormattedHeader
+							headerText={ title }
+							subHeaderText={
+								"Now that your site has been created, it's time to get it ready for you to share. " +
+								"We've prepared a list of things that will help you get there quickly."
+							}
+						/>
 					</div>
 					{ siteId && <QuerySiteChecklist siteId={ siteId } /> }
-					<Checklist isLoading={ ! tasks.length } tasks={ tasks } onAction={ this.onAction } />
+					<Checklist
+						isLoading={ ! tasks.length }
+						tasks={ tasks }
+						onAction={ this.handleAction }
+						onToggle={ this.handleToggle }
+					/>
 				</div>
 			</Main>
 		);
@@ -81,6 +98,9 @@ const mapStateToProps = state => {
 
 	return { siteId, siteSlug, tasks };
 };
-const mapDispatchToProps = { track: recordTracksEvent };
+const mapDispatchToProps = {
+	track: recordTracksEvent,
+	update: requestSiteChecklistTaskUpdate,
+};
 
 export default connect( mapStateToProps, mapDispatchToProps )( ChecklistThankYou );
