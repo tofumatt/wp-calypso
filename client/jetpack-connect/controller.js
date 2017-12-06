@@ -26,10 +26,12 @@ import PlansLanding from './plans-landing';
 import route from 'lib/route';
 import userFactory from 'lib/user';
 import { authorizeQueryDataSchema } from './schema';
+import { authQueryTransformer } from './utils';
 import { JETPACK_CONNECT_QUERY_SET } from 'state/action-types';
 import { renderWithReduxStore } from 'lib/react-helpers';
 import { setDocumentHeadTitle as setTitle } from 'state/document-head/actions';
 import { setSection } from 'state/ui/actions';
+import { storePlan } from './persistence-utils';
 import {
 	PLAN_JETPACK_PREMIUM,
 	PLAN_JETPACK_PERSONAL,
@@ -38,7 +40,6 @@ import {
 	PLAN_JETPACK_PERSONAL_MONTHLY,
 	PLAN_JETPACK_BUSINESS_MONTHLY,
 } from 'lib/plans/constants';
-import { storePlan } from './persistence-utils';
 
 /**
  * Module variables
@@ -95,44 +96,6 @@ const getPlanSlugFromFlowType = ( type, interval = 'yearly' ) => {
 	return get( planSlugs, [ interval, type ], '' );
 };
 
-export function parseQueryOrFail( context, next ) {
-	const { query, store } = context;
-
-	const validateQueryObject = validator( authorizeQueryDataSchema );
-	const validQueryObject = validateQueryObject( query );
-
-	if ( validQueryObject ) {
-		debug( 'set initial query object', query );
-		store.dispatch( {
-			type: JETPACK_CONNECT_QUERY_SET,
-			query,
-		} );
-
-		//
-		// Prunes ?query=string
-		// Previous multi-step first saves query, then `page.redirect`s
-		// without query, falling through to other route handler
-		//
-		// Not really compatible with this approach :/
-		//
-		// page.redirect( context.pathname );
-
-		removeSidebar( context );
-
-		const analyticsBasePath = 'jetpack/connect/authorize';
-		const analyticsPageTitle = 'Jetpack Authorize';
-
-		analytics.pageView.record( analyticsBasePath, analyticsPageTitle );
-	} else {
-		return renderWithReduxStore(
-			<NoDirectAccessError />,
-			document.getElementById( 'primary' ),
-			store
-		);
-	}
-	return next();
-}
-
 export function redirectWithoutLocaleifLoggedIn( context, next ) {
 	if ( userModule.get() && i18nUtils.getLocaleFromPath( context.path ) ) {
 		const urlWithoutLocale = i18nUtils.removeLocaleFromPath( context.path );
@@ -179,32 +142,74 @@ export function connect( context ) {
 }
 
 export function authorizeForm( context ) {
-	const analyticsBasePath = 'jetpack/connect/authorize',
-		analyticsPageTitle = 'Jetpack Authorize';
+	const { query } = context;
 
 	removeSidebar( context );
 
-	let interval = context.params.interval;
-	let locale = context.params.locale;
-	if ( context.params.localeOrInterval ) {
-		if ( [ 'monthly', 'yearly' ].indexOf( context.params.localeOrInterval ) >= 0 ) {
-			interval = context.params.localeOrInterval;
-		} else {
-			locale = context.params.localeOrInterval;
+	const validQueryObject = validator( authorizeQueryDataSchema )( query );
+
+	if ( validQueryObject ) {
+		analytics.pageView.record( 'jetpack/connect/authorize', 'Jetpack Authorize' );
+		const transformedQuery = authQueryTransformer( query );
+
+		// No longer setting/persisting query
+		// However, from is required for some reducer logic :(
+		// FIXME
+		context.store.dispatch( {
+			type: JETPACK_CONNECT_QUERY_SET,
+			query: { from: query.from },
+		} );
+
+		let interval = context.params.interval;
+		let locale = context.params.locale;
+		if ( context.params.localeOrInterval ) {
+			if ( [ 'monthly', 'yearly' ].indexOf( context.params.localeOrInterval ) >= 0 ) {
+				interval = context.params.localeOrInterval;
+			} else {
+				locale = context.params.localeOrInterval;
+			}
 		}
+		return renderWithReduxStore(
+			<JetpackConnectAuthorizeForm
+				path={ context.path }
+				interval={ interval }
+				locale={ locale }
+				authAlreadyAuthorized={ transformedQuery.authAlreadyAuthorized }
+				authBlogname={ transformedQuery.authBlogname }
+				authClientId={ transformedQuery.authClientId }
+				authFrom={ transformedQuery.authFrom }
+				authHomeUrl={ transformedQuery.authHomeUrl }
+				authJpVersion={ transformedQuery.authJpVersion }
+				authNewUserStartedConnection={ transformedQuery.authNewUserStartedConnection }
+				authNonce={ transformedQuery.authNonce }
+				authPartnerId={ transformedQuery.authPartnerId }
+				authRedirectAfterAuth={ transformedQuery.authRedirectAfterAuth }
+				authRedirectUri={ transformedQuery.authRedirectUri }
+				authScope={ transformedQuery.authScope }
+				authSecret={ transformedQuery.authSecret }
+				authSite={ transformedQuery.authSite }
+				authSiteIcon={ transformedQuery.authSiteIcon }
+				authSiteUrl={ transformedQuery.authSiteUrl }
+				authState={ transformedQuery.authState }
+				authTracksUi={ transformedQuery.authTracksUi }
+				authTracksUt={ transformedQuery.authTracksUt }
+				authUserEmail={ transformedQuery.authUserEmail }
+			/>,
+			document.getElementById( 'primary' ),
+			context.store
+		);
 	}
 
-	analytics.pageView.record( analyticsBasePath, analyticsPageTitle );
-	renderWithReduxStore(
-		<JetpackConnectAuthorizeForm path={ context.path } interval={ interval } locale={ locale } />,
+	return renderWithReduxStore(
+		<NoDirectAccessError />,
 		document.getElementById( 'primary' ),
 		context.store
 	);
 }
 
 export function sso( context ) {
-	const analyticsBasePath = '/jetpack/sso',
-		analyticsPageTitle = 'Jetpack SSO';
+	const analyticsBasePath = '/jetpack/sso';
+	const analyticsPageTitle = 'Jetpack SSO';
 
 	removeSidebar( context );
 

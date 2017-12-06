@@ -4,7 +4,6 @@
  */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import addQueryArgs from 'lib/route/add-query-args';
 import cookie from 'cookie';
 import debugModule from 'debug';
 import Gridicon from 'gridicons';
@@ -50,18 +49,11 @@ import {
 import {
 	getAuthAttempts,
 	getAuthorizationData,
-	getAuthorizationRemoteSite,
-	getSiteIdFromQueryObject,
 	getUserAlreadyConnected,
 	hasExpiredSecretError as hasExpiredSecretErrorSelector,
 	hasXmlrpcError as hasXmlrpcErrorSelector,
 	isRemoteSiteOnSitesList,
 } from 'state/jetpack-connect/selectors';
-import {
-	getJetpackConnectFrom,
-	getJetpackConnectPartnerId,
-	getJetpackConnectRedirectAfterAuth,
-} from 'state/selectors';
 
 /**
  * Constants
@@ -73,21 +65,31 @@ const PRESSABLE_PARTNER_ID = 49640;
 
 export class LoggedInForm extends Component {
 	static propTypes = {
+		authAlreadyAuthorized: PropTypes.bool,
+		authBlogname: PropTypes.string,
+		authClientId: PropTypes.number.isRequired,
+		authFrom: PropTypes.string,
+		authJpVersion: PropTypes.string.isRequired,
+		authNewUserStartedConnection: PropTypes.bool,
+		authNonce: PropTypes.string.isRequired,
+		authPartnerId: PropTypes.number,
+		authRedirectAfterAuth: PropTypes.string,
+		authRedirectUri: PropTypes.string.isRequired,
+		authScope: PropTypes.string.isRequired,
+		authSecret: PropTypes.string.isRequired,
+		authSite: PropTypes.string.isRequired,
+		authState: PropTypes.string.isRequired,
+
 		// Connected props
 		authAttempts: PropTypes.number.isRequired,
 		authorizationData: PropTypes.shape( {
 			authorizeError: PropTypes.oneOfType( [ PropTypes.object, PropTypes.bool ] ),
 			authorizeSuccess: PropTypes.bool,
 			isRedirectingToWpAdmin: PropTypes.bool,
-			queryObject: PropTypes.shape( {
-				already_authorized: PropTypes.bool,
-				new_user_started_connection: PropTypes.bool,
-			} ).isRequired,
 			siteReceived: PropTypes.bool,
 		} ).isRequired,
 		authorize: PropTypes.func.isRequired,
 		calypsoStartedConnection: PropTypes.bool,
-		from: PropTypes.string,
 		goBackToWpAdmin: PropTypes.func.isRequired,
 		goToXmlrpcErrorFallbackUrl: PropTypes.func.isRequired,
 		hasExpiredSecretError: PropTypes.bool,
@@ -95,11 +97,7 @@ export class LoggedInForm extends Component {
 		isAlreadyOnSitesList: PropTypes.bool,
 		isFetchingAuthorizationSite: PropTypes.bool,
 		isFetchingSites: PropTypes.bool,
-		partnerId: PropTypes.number,
-		queryDataSiteId: PropTypes.number,
 		recordTracksEvent: PropTypes.func.isRequired,
-		redirectAfterAuth: PropTypes.string,
-		remoteSiteUrl: PropTypes.string,
 		retryAuth: PropTypes.func.isRequired,
 		siteSlug: PropTypes.string.isRequired,
 		translate: PropTypes.func.isRequired,
@@ -111,31 +109,34 @@ export class LoggedInForm extends Component {
 	state = { haveAuthorized: false };
 
 	componentWillMount() {
-		const { authorize, recordTracksEvent } = this.props;
-		const { queryObject, autoAuthorize } = this.props.authorizationData;
+		const { authAlreadyAuthorized, authNewUserStartedConnection, recordTracksEvent } = this.props;
+		const { autoAuthorize } = this.props.authorizationData;
 		recordTracksEvent( 'calypso_jpc_auth_view' );
 
 		const doAutoAuthorize =
 			! this.props.isAlreadyOnSitesList &&
-			! queryObject.already_authorized &&
-			( this.props.calypsoStartedConnection ||
-				queryObject.new_user_started_connection ||
-				autoAuthorize );
+			! authAlreadyAuthorized &&
+			( this.props.calypsoStartedConnection || authNewUserStartedConnection || autoAuthorize );
 
 		// isSSO is a separate case from the rest since we have already validated
 		// it in authorize-form.jsx. Therefore, if it's set, just authorize and redirect.
 		if ( this.isSso() || doAutoAuthorize ) {
 			debug( 'Authorizing automatically on component mount' );
 			this.setState( { haveAuthorized: true } );
-			return authorize( queryObject );
+			return this.authorize();
 		}
 	}
 
 	componentWillReceiveProps( nextProps ) {
-		const { goBackToWpAdmin, redirectAfterAuth, remoteSiteUrl, retryAuth } = nextProps;
+		const {
+			authAlreadyAuthorized,
+			goBackToWpAdmin,
+			authRedirectAfterAuth,
+			authSite,
+			retryAuth,
+		} = nextProps;
 		const {
 			siteReceived,
-			queryObject,
 			isRedirectingToWpAdmin,
 			authorizeSuccess,
 			authorizeError,
@@ -148,11 +149,11 @@ export class LoggedInForm extends Component {
 			this.shouldRedirectJetpackStart( nextProps )
 		) {
 			if ( ! isRedirectingToWpAdmin && authorizeSuccess ) {
-				return goBackToWpAdmin( redirectAfterAuth );
+				return goBackToWpAdmin( authRedirectAfterAuth );
 			}
 		} else if ( siteReceived ) {
 			return this.redirect();
-		} else if ( nextProps.isAlreadyOnSitesList && queryObject.already_authorized ) {
+		} else if ( nextProps.isAlreadyOnSitesList && authAlreadyAuthorized ) {
 			return this.redirect();
 		}
 		if (
@@ -161,56 +162,71 @@ export class LoggedInForm extends Component {
 			! this.retryingAuth &&
 			! nextProps.hasXmlrpcError &&
 			! nextProps.hasExpiredSecretError &&
-			remoteSiteUrl
+			authSite
 		) {
 			// Expired secret errors, and XMLRPC errors will be resolved in `handleResolve`.
 			// Any other type of error, we will immediately and automatically retry the request as many times
 			// as controlled by MAX_AUTH_ATTEMPTS.
 			const attempts = this.props.authAttempts || 0;
 			this.retryingAuth = true;
-			return retryAuth( remoteSiteUrl, attempts + 1 );
+			return retryAuth( authSite, attempts + 1 );
 		}
 	}
 
+	authorize() {
+		this.props.authorize( {
+			_wp_nonce: this.props.authNonce,
+			client_id: this.props.authClientId,
+			jp_version: this.props.authJpVersion,
+			redirect_uri: this.props.authRedirectUri,
+			scope: this.props.authScope,
+			secret: this.props.authSecret,
+			state: this.props.authState,
+		} );
+	}
+
 	redirect() {
-		const { goBackToWpAdmin, redirectAfterAuth } = this.props;
-		const { from } = this.props;
+		const { goBackToWpAdmin, authRedirectAfterAuth } = this.props;
+		const { authFrom } = this.props;
 
 		if ( this.isSso() || this.isWoo() || this.isFromJpo() || this.shouldRedirectJetpackStart() ) {
 			debug(
 				'Going back to WP Admin.',
 				'Connection initiated via: ',
-				from,
+				authFrom,
 				'SSO found:',
 				this.isSso()
 			);
-			goBackToWpAdmin( redirectAfterAuth );
+			goBackToWpAdmin( authRedirectAfterAuth );
 		} else {
 			page.redirect( this.getRedirectionTarget() );
 		}
 	}
 
-	isFromJpo( { from } = this.props ) {
-		return startsWith( from, 'jpo' );
+	isFromJpo( { authFrom } = this.props ) {
+		return startsWith( authFrom, 'jpo' );
 	}
 
 	/**
 	 * Check whether this a valid authorized SSO request
 	 *
-	 * @param  {?string} props.from            Where is the request from
-	 * @param  {?number} props.queryDataSiteId Remote site ID
-	 * @return {boolean}                       True if it's a valid SSO request otherwise false
+	 * @param  {?string} props.authFrom     Where is the request from
+	 * @param  {?number} props.authClientId Remote site ID
+	 * @return {boolean}                    True if it's a valid SSO request otherwise false
 	 */
-	isSso( { from, queryDataSiteId } = this.props ) {
+	isSso( { authFrom, authClientId } = this.props ) {
 		const cookies = cookie.parse( document.cookie );
 		const jetpack_sso_approved = cookies.jetpack_sso_approved
 			? parseInt( cookies.jetpack_sso_approved, 10 )
 			: null;
-		return 'sso' === from && !! queryDataSiteId && queryDataSiteId === jetpack_sso_approved;
+		return 'sso' === authFrom && !! authClientId && authClientId === jetpack_sso_approved;
 	}
 
-	isWoo( { from } = this.props ) {
-		return includes( [ 'woocommerce-services-auto-authorize', 'woocommerce-setup-wizard' ], from );
+	isWoo( { authFrom } = this.props ) {
+		return includes(
+			[ 'woocommerce-services-auto-authorize', 'woocommerce-setup-wizard' ],
+			authFrom
+		);
 	}
 
 	shouldRedirectJetpackStart( { partnerId } = this.props ) {
@@ -234,50 +250,59 @@ export class LoggedInForm extends Component {
 
 	handleSignOut = () => {
 		const { recordTracksEvent } = this.props;
-		const { queryObject } = this.props.authorizationData;
-		const redirect = addQueryArgs( queryObject, window.location.href );
 		recordTracksEvent( 'calypso_jpc_signout_click' );
-		userUtilities.logout( redirect );
+		userUtilities.logout( window.location.href );
 	};
 
 	handleResolve = () => {
-		const { goToXmlrpcErrorFallbackUrl, recordTracksEvent, remoteSiteUrl } = this.props;
-		const { queryObject, authorizationCode } = this.props.authorizationData;
+		const { authSite, goToXmlrpcErrorFallbackUrl, recordTracksEvent } = this.props;
+		const { authorizationCode } = this.props.authorizationData;
 		const authUrl = '/wp-admin/admin.php?page=jetpack&connect_url_redirect=true';
 		this.retryingAuth = false;
 		if ( this.props.hasExpiredSecretError ) {
 			// In this case, we need to re-issue the secret.
 			// We do this by redirecting to Jetpack client, which will automatically redirect back here.
 			recordTracksEvent( 'calypso_jpc_resolve_expired_secret_error_click' );
-			externalRedirect( remoteSiteUrl + authUrl );
+			externalRedirect( authSite + authUrl );
 			return;
 		}
 		// Otherwise, we assume the site is having trouble receive XMLRPC requests.
 		// To resolve, we redirect to the Jetpack Client, and attempt to complete the connection with
 		// legacy functions on the client.
 		recordTracksEvent( 'calypso_jpc_resolve_xmlrpc_error_click' );
-		goToXmlrpcErrorFallbackUrl( queryObject, authorizationCode );
+		goToXmlrpcErrorFallbackUrl(
+			{
+				redirect_uri: this.props.authRedirectUri,
+				state: this.props.authState,
+			},
+			authorizationCode
+		);
 	};
 
 	handleSubmit = () => {
-		const { authorize, goBackToWpAdmin, recordTracksEvent, redirectAfterAuth } = this.props;
-		const { queryObject, authorizeError, authorizeSuccess } = this.props.authorizationData;
+		const {
+			authAlreadyAuthorized,
+			authRedirectAfterAuth,
+			goBackToWpAdmin,
+			recordTracksEvent,
+		} = this.props;
+		const { authorizeError, authorizeSuccess } = this.props.authorizationData;
 
 		if (
 			! this.props.isAlreadyOnSitesList &&
 			! this.props.isFetchingSites &&
-			queryObject.already_authorized
+			authAlreadyAuthorized
 		) {
 			recordTracksEvent( 'calypso_jpc_back_wpadmin_click' );
-			return goBackToWpAdmin( redirectAfterAuth );
+			return goBackToWpAdmin( authRedirectAfterAuth );
 		}
 
-		if ( this.props.isAlreadyOnSitesList && queryObject.already_authorized ) {
+		if ( this.props.isAlreadyOnSitesList && authAlreadyAuthorized ) {
 			recordTracksEvent( 'calypso_jpc_already_authorized_click' );
 			return this.redirect();
 		}
 
-		if ( authorizeSuccess && ! queryObject.already_authorized ) {
+		if ( authorizeSuccess && ! authAlreadyAuthorized ) {
 			recordTracksEvent( 'calypso_jpc_activate_click' );
 			return this.redirect();
 		}
@@ -291,7 +316,7 @@ export class LoggedInForm extends Component {
 		}
 
 		recordTracksEvent( 'calypso_jpc_approve_click' );
-		return authorize( queryObject );
+		return this.authorize();
 	};
 
 	isAuthorizing() {
@@ -347,16 +372,15 @@ export class LoggedInForm extends Component {
 	}
 
 	renderNotices() {
-		const { remoteSiteUrl } = this.props;
+		const { authAlreadyAuthorized, authSite } = this.props;
 		const {
 			authorizeError,
-			queryObject,
 			isAuthorizing,
 			authorizeSuccess,
 			userAlreadyConnected,
 		} = this.props.authorizationData;
 		if (
-			queryObject.already_authorized &&
+			authAlreadyAuthorized &&
 			! this.props.isFetchingSites &&
 			! this.props.isAlreadyOnSitesList
 		) {
@@ -394,7 +418,7 @@ export class LoggedInForm extends Component {
 			return <JetpackConnectNotices noticeType="alreadyConnected" />;
 		}
 		if ( this.props.hasExpiredSecretError ) {
-			return <JetpackConnectNotices noticeType="secretExpired" siteUrl={ remoteSiteUrl } />;
+			return <JetpackConnectNotices noticeType="secretExpired" siteUrl={ authSite } />;
 		}
 		if ( this.props.hasXmlrpcError ) {
 			return this.renderXmlrpcFeedback();
@@ -408,9 +432,8 @@ export class LoggedInForm extends Component {
 	}
 
 	getButtonText() {
-		const { translate } = this.props;
+		const { authAlreadyAuthorized, translate } = this.props;
 		const {
-			queryObject,
 			isAuthorizing,
 			authorizeSuccess,
 			isRedirectingToWpAdmin,
@@ -420,7 +443,7 @@ export class LoggedInForm extends Component {
 		if (
 			! this.props.isAlreadyOnSitesList &&
 			! this.props.isFetchingSites &&
-			queryObject.already_authorized
+			authAlreadyAuthorized
 		) {
 			return translate( 'Go back to your site' );
 		}
@@ -458,8 +481,7 @@ export class LoggedInForm extends Component {
 	}
 
 	getDisclaimerText() {
-		const { queryObject } = this.props.authorizationData;
-		const { blogname } = queryObject;
+		const { authBlogname } = this.props;
 
 		const detailsLink = (
 			<a
@@ -478,7 +500,7 @@ export class LoggedInForm extends Component {
 					detailsLink,
 				},
 				args: {
-					siteName: decodeEntities( blogname ),
+					siteName: decodeEntities( authBlogname ),
 				},
 			}
 		);
@@ -510,34 +532,31 @@ export class LoggedInForm extends Component {
 	}
 
 	getRedirectionTarget() {
-		const { partnerId, siteId, siteSlug } = this.props;
+		const { authPartnerId, authClientId, siteSlug } = this.props;
 
 		// Redirect sites hosted on Pressable with a partner plan to some URL.
 		if (
 			config.isEnabled( 'jetpack/connect-redirect-pressable-credential-approval' ) &&
-			PRESSABLE_PARTNER_ID === partnerId
+			PRESSABLE_PARTNER_ID === authPartnerId
 		) {
-			return `/start/pressable-nux?blogid=${ siteId }`;
+			return `/start/pressable-nux?blogid=${ authClientId }`;
 		}
 
 		return PLANS_PAGE + siteSlug;
 	}
 
 	renderFooterLinks() {
-		const { redirectAfterAuth, translate } = this.props;
+		const { authBlogname, authRedirectAfterAuth, translate } = this.props;
 		const {
-			queryObject,
 			authorizeSuccess,
 			isAuthorizing,
 			isRedirectingToWpAdmin,
 		} = this.props.authorizationData;
-		const { blogname } = queryObject;
-		const redirectTo = addQueryArgs( queryObject, window.location.href );
 		const backToWpAdminLink = (
-			<LoggedOutFormLinkItem icon={ true } href={ redirectAfterAuth }>
+			<LoggedOutFormLinkItem icon={ true } href={ authRedirectAfterAuth }>
 				<Gridicon size={ 18 } icon="arrow-left" />{' '}
 				{ translate( 'Return to %(sitename)s', {
-					args: { sitename: decodeEntities( blogname ) },
+					args: { sitename: decodeEntities( authBlogname ) },
 				} ) }
 			</LoggedOutFormLinkItem>
 		);
@@ -560,7 +579,7 @@ export class LoggedInForm extends Component {
 		return (
 			<LoggedOutFormLinks>
 				{ this.isWaitingForConfirmation() ? backToWpAdminLink : null }
-				<LoggedOutFormLinkItem href={ login( { redirectTo } ) }>
+				<LoggedOutFormLinkItem href={ login( { redirectTo: window.location.href } ) }>
 					{ translate( 'Sign in as a different user' ) }
 				</LoggedOutFormLinkItem>
 				<LoggedOutFormLinkItem onClick={ this.handleSignOut }>
@@ -604,7 +623,15 @@ export class LoggedInForm extends Component {
 	render() {
 		return (
 			<div className="jetpack-connect__logged-in-form">
-				<AuthFormHeader />
+				<AuthFormHeader
+					authBlogname={ this.props.authBlogname }
+					authClientId={ this.props.authClientId }
+					authHomeUrl={ this.props.authHomeUrl }
+					authJpVersion={ this.props.authJpVersion }
+					authPartnerId={ this.props.authPartnerId }
+					authSiteIcon={ this.props.authSiteIcon }
+					authSiteUrl={ this.props.authSiteUrl }
+				/>
 				<Card>
 					<Gravatar user={ this.props.user } size={ 64 } />
 					<p className="jetpack-connect__logged-in-form-user-text">{ this.getUserText() }</p>
@@ -618,26 +645,18 @@ export class LoggedInForm extends Component {
 }
 
 export default connect(
-	state => {
-		const remoteSiteUrl = getAuthorizationRemoteSite( state );
-		const siteId = getSiteIdFromQueryObject( state );
-		const siteSlug = urlToSlug( remoteSiteUrl );
+	( state, ownProps ) => {
+		const siteSlug = urlToSlug( ownProps.authSite );
 
 		return {
 			authAttempts: getAuthAttempts( state, siteSlug ),
 			authorizationData: getAuthorizationData( state ),
-			calypsoStartedConnection: isCalypsoStartedConnection( remoteSiteUrl ),
-			from: getJetpackConnectFrom( state ),
+			calypsoStartedConnection: isCalypsoStartedConnection( ownProps.authSite ),
 			hasExpiredSecretError: hasExpiredSecretErrorSelector( state ),
 			hasXmlrpcError: hasXmlrpcErrorSelector( state ),
 			isAlreadyOnSitesList: isRemoteSiteOnSitesList( state ),
-			isFetchingAuthorizationSite: isRequestingSite( state, siteId ),
+			isFetchingAuthorizationSite: isRequestingSite( state, ownProps.authClientId ),
 			isFetchingSites: isRequestingSites( state ),
-			partnerId: getJetpackConnectPartnerId( state ),
-			queryDataSiteId: siteId,
-			redirectAfterAuth: getJetpackConnectRedirectAfterAuth( state ),
-			remoteSiteUrl,
-			siteId,
 			siteSlug,
 			user: getCurrentUser( state ),
 			userAlreadyConnected: getUserAlreadyConnected( state ),
