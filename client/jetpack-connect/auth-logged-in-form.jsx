@@ -15,6 +15,7 @@ import { localize } from 'i18n-calypso';
 /**
  * Internal dependencies
  */
+import addQueryArgs from 'lib/route/add-query-args';
 import AuthFormHeader from './auth-form-header';
 import Button from 'components/button';
 import Card from 'components/card';
@@ -35,11 +36,11 @@ import userUtilities from 'lib/user/utils';
 import { decodeEntities } from 'lib/formatting';
 import { externalRedirect } from 'lib/route/path';
 import { getCurrentUser } from 'state/current-user/selectors';
+import { isCalypsoStartedConnection } from './persistence-utils';
 import { isRequestingSite, isRequestingSites } from 'state/sites/selectors';
 import { login } from 'lib/paths';
 import { recordTracksEvent as recordTracksEventAction } from 'state/analytics/actions';
 import { urlToSlug } from 'lib/url';
-import { isCalypsoStartedConnection } from './persistence-utils';
 import {
 	authorize as authorizeAction,
 	goBackToWpAdmin as goBackToWpAdminAction,
@@ -532,7 +533,7 @@ export class LoggedInForm extends Component {
 	}
 
 	getRedirectionTarget() {
-		const { authPartnerId, authClientId, siteSlug } = this.props;
+		const { authClientId, authPartnerId, authRedirectAfterAuth, siteSlug } = this.props;
 
 		// Redirect sites hosted on Pressable with a partner plan to some URL.
 		if (
@@ -542,7 +543,7 @@ export class LoggedInForm extends Component {
 			return `/start/pressable-nux?blogid=${ authClientId }`;
 		}
 
-		return PLANS_PAGE + siteSlug;
+		return addQueryArgs( { redirectAfterAuth: authRedirectAfterAuth }, PLANS_PAGE + siteSlug );
 	}
 
 	renderFooterLinks() {
