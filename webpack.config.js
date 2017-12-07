@@ -31,6 +31,9 @@ const config = require( './server/config' );
 const calypsoEnv = config( 'env_id' );
 const bundleEnv = config( 'env' );
 const isDevelopment = bundleEnv === 'development';
+const shouldMinify = process.env.hasOwnProperty( 'MINIFY_JS' )
+	? process.env.MINIFY_JS
+	: ! isDevelopment;
 
 /**
  * This function scans the /client/extensions directory in order to generate a map that looks like this:
@@ -254,7 +257,7 @@ if ( process.env.DASHBOARD ) {
 	webpackConfig.plugins.unshift( new DashboardPlugin() );
 }
 
-if ( ! isDevelopment ) {
+if ( shouldMinify ) {
 	webpackConfig.devtool = 'cheap-module-source-map';
 	webpackConfig.plugins.push(
 		new UglifyJsPlugin( {
