@@ -4,7 +4,13 @@
  */
 import { get } from 'lodash';
 
-export default function getPostRevisionsDiff( state, siteId, fromRevisionId, toRevisionId ) {
+export default function getPostRevisionsDiff(
+	state,
+	siteId,
+	parentPost,
+	fromRevisionId,
+	toRevisionId
+) {
 	const key = `${ fromRevisionId }:${ toRevisionId }`;
-	return get( state, [ 'posts.revisions.diffs', siteId, key ], {} );
+	return get( state, [ 'posts.revisions.diffs', siteId, parentPost, key ], {} );
 }

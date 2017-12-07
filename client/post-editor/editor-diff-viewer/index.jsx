@@ -14,7 +14,7 @@ import { get, has } from 'lodash';
 /**
  * Internal dependencies
  */
-import { getPostRevision, getPostRevisionsDiff } from 'state/selectors';
+import { getPostRevision } from 'state/selectors';
 import EditorDiffChanges from './changes';
 
 class EditorDiffViewer extends PureComponent {
@@ -68,5 +68,4 @@ class EditorDiffViewer extends PureComponent {
 
 export default connect( ( state, { siteId, postId, selectedRevisionId } ) => ( {
 	revision: getPostRevision( state, siteId, postId, selectedRevisionId, 'display' ),
-	diff: getPostRevisionsDiff( state, siteId, postId, selectedRevisionId ),
 } ) )( EditorDiffViewer );

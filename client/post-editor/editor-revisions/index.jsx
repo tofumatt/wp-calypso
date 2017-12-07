@@ -6,7 +6,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { localize } from 'i18n-calypso';
 import { connect } from 'react-redux';
-import { flow } from 'lodash';
+import { flow, findIndex, get } from 'lodash';
 
 /**
  * Internal dependencies
@@ -25,7 +25,15 @@ import QueryUsers from 'components/data/query-users';
 
 class EditorRevisions extends Component {
 	render = () => {
-		const { authorsIds, postId, revisions, selectedRevisionId, siteId } = this.props;
+		const {
+			authorsIds,
+			postId,
+			nextRevisionId,
+			prevRevisionId,
+			revisions,
+			selectedRevisionId,
+			siteId,
+		} = this.props;
 
 		return (
 			<div className="editor-revisions__wrapper">
@@ -37,10 +45,17 @@ class EditorRevisions extends Component {
 				<QueryUsers siteId={ siteId } userIds={ authorsIds } />
 				<EditorDiffViewer
 					postId={ postId }
+					prevRevisionId={ prevRevisionId }
 					selectedRevisionId={ selectedRevisionId }
 					siteId={ siteId }
 				/>
-				<EditorRevisionsList postId={ postId } revisions={ revisions } siteId={ siteId } />
+				<EditorRevisionsList
+					postId={ postId }
+					revisions={ revisions }
+					siteId={ siteId }
+					nextRevisionId={ nextRevisionId }
+					prevRevisionId={ prevRevisionId }
+				/>
 			</div>
 		);
 	};
@@ -63,11 +78,18 @@ export default flow(
 	connect( state => {
 		const postId = getEditorPostId( state );
 		const siteId = getSelectedSiteId( state );
+
+		const revisions = getPostRevisions( state, siteId, postId, 'display' );
+		const selectedRevisionId = getPostRevisionsSelectedRevisionId( state );
+		const selectedIdIndex = findIndex( revisions, { id: selectedRevisionId } );
+
 		return {
 			authorsIds: getPostRevisionsAuthorsId( state, siteId, postId ),
 			postId,
-			revisions: getPostRevisions( state, siteId, postId, 'display' ),
-			selectedRevisionId: getPostRevisionsSelectedRevisionId( state ),
+			nextRevisionId: selectedRevisionId && get( revisions, [ selectedIdIndex - 1, 'id' ] ),
+			prevRevisionId: selectedRevisionId && get( revisions, [ selectedIdIndex + 1, 'id' ] ),
+			revisions,
+			selectedRevisionId,
 			siteId,
 		};
 	} )

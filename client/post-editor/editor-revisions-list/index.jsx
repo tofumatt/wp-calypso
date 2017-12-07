@@ -8,7 +8,7 @@ import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
-import { findIndex, get, head, isEmpty, map } from 'lodash';
+import { head, isEmpty, map } from 'lodash';
 
 /**
  * Internal dependencies
@@ -16,11 +16,7 @@ import { findIndex, get, head, isEmpty, map } from 'lodash';
 import EditorRevisionsListHeader from './header';
 import EditorRevisionsListItem from './item';
 import { selectPostRevision } from 'state/posts/revisions/actions';
-import {
-	getPostRevision,
-	getPostRevisionsDiff,
-	getPostRevisionsSelectedRevisionId,
-} from 'state/selectors';
+import { getPostRevision, getPostRevisionsDiff } from 'state/selectors';
 import KeyboardShortcuts from 'lib/keyboard-shortcuts';
 
 class EditorRevisionsList extends PureComponent {
@@ -143,17 +139,11 @@ class EditorRevisionsList extends PureComponent {
 }
 
 export default connect(
-	( state, { revisions } ) => {
-		const selectedRevisionId = getPostRevisionsSelectedRevisionId( state );
-		const selectedIdIndex = findIndex( revisions, { id: selectedRevisionId } );
-		const nextRevisionId = selectedRevisionId && get( revisions, [ selectedIdIndex - 1, 'id' ] );
-		const prevRevisionId = selectedRevisionId && get( revisions, [ selectedIdIndex + 1, 'id' ] );
-
+	( state, { revisions, prevRevisionId, selectedRevisionId, siteId } ) => {
 		return {
+			diff: getPostRevisionsDiff( state, siteId, prevRevisionId, selectedRevisionId ),
+			revisions,
 			selectedRevision: getPostRevision( state, selectedRevisionId ),
-			nextRevisionId,
-			prevRevisionId,
-			selectedRevisionId,
 		};
 	},
 	{ selectPostRevision }
