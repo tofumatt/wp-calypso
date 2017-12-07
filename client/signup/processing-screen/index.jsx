@@ -297,7 +297,8 @@ export class SignupProcessingScreen extends Component {
 	renderActionButton() {
 		const { loginHandler, translate } = this.props;
 		const isChecklistTest =
-			config.isEnabled( 'onboarding-checklist' ) && 'active' === abtest( 'checklistThankYouPage' );
+			config.isEnabled( 'onboarding-checklist' ) &&
+			'show' === abtest( 'checklistThankYouForFreeUser' );
 
 		if ( ! loginHandler ) {
 			return (
@@ -320,7 +321,8 @@ export class SignupProcessingScreen extends Component {
 
 	render() {
 		const isChecklistTest =
-			config.isEnabled( 'onboarding-checklist' ) && 'active' === abtest( 'checklistThankYouPage' );
+			config.isEnabled( 'onboarding-checklist' ) &&
+			'show' === abtest( 'checklistThankYouForFreeUser' );
 		if (
 			! this.state.hasPaidSubscription &&
 			! this.props.useOAuth2Layout &&

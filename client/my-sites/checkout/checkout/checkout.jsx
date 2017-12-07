@@ -286,7 +286,8 @@ const Checkout = createReactClass( {
 	getCheckoutCompleteRedirectPath: function() {
 		let renewalItem;
 		const isChecklistTest =
-			config.isEnabled( 'onboarding-checklist' ) && 'active' === abtest( 'checklistThankYouPage' );
+			config.isEnabled( 'onboarding-checklist' ) &&
+			'show' === abtest( 'checklistThankYouForPaidUser' );
 		const { cart, selectedSiteSlug, transaction: { step: { data: receipt } } } = this.props;
 
 		// The `:receiptId` string is filled in by our callback page after the PayPal checkout
@@ -312,7 +313,7 @@ const Checkout = createReactClass( {
 		}
 
 		if ( ! selectedSiteSlug ) {
-			return '/checkout/thank-you/features/';
+			return '/checkout/thank-you/features';
 		}
 
 		if ( isChecklistTest && cartItems.hasPlan( cart ) && this.isNewSite() ) {
