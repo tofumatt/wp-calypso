@@ -94,7 +94,7 @@ export default flow(
 
 		return {
 			authorsIds: getPostRevisionsAuthorsId( state, siteId, postId ),
-			diff: getPostRevisionsDiff( state, siteId, prevRevisionId, selectedRevisionId ),
+			diff: getPostRevisionsDiff( state, siteId, postId, prevRevisionId, selectedRevisionId ),
 			nextRevisionId,
 			postId,
 			prevRevisionId,
