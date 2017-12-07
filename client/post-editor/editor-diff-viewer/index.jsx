@@ -15,7 +15,7 @@ import { get, has } from 'lodash';
  * Internal dependencies
  */
 import { getPostRevision } from 'state/selectors';
-import EditorDiffChanges from './changes';
+//import EditorDiffChanges from './changes';
 
 class EditorDiffViewer extends PureComponent {
 	static propTypes = {
@@ -24,10 +24,11 @@ class EditorDiffViewer extends PureComponent {
 		siteId: PropTypes.number.isRequired,
 
 		// connected
-		revisionChanges: PropTypes.shape( {
+		diff: PropTypes.object,
+		/*		revisionChanges: PropTypes.shape( {
 			title: PropTypes.array,
 			content: PropTypes.array,
-		} ).isRequired,
+		} ).isRequired,*/
 	};
 
 	scrollToFirstChangeOrTop = () => {
@@ -49,10 +50,15 @@ class EditorDiffViewer extends PureComponent {
 	}
 
 	render() {
-		const { revisionChanges } = this.props;
+		const { diff } = this.props;
+
 		const classes = classNames( 'editor-diff-viewer', {
-			'is-loading': ! has( revisionChanges, 'title[0].value' ),
+			'is-loading': ! has( diff, 'title[0].value' ),
 		} );
+		return <div className={ classes } />;
+
+		/*
+		@TODO make the following & EditorDiffChanges "work"
 		return (
 			<div className={ classes }>
 				<h1 className="editor-diff-viewer__title">
@@ -62,7 +68,7 @@ class EditorDiffViewer extends PureComponent {
 					<EditorDiffChanges changes={ revisionChanges.content } />
 				</pre>
 			</div>
-		);
+		);*/
 	}
 }
 

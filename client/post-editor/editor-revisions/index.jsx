@@ -14,6 +14,7 @@ import { flow, findIndex, get } from 'lodash';
 import { getEditorPostId } from 'state/ui/editor/selectors';
 import {
 	getPostRevisions,
+	getPostRevisionsDiff,
 	getPostRevisionsAuthorsId,
 	getPostRevisionsSelectedRevisionId,
 } from 'state/selectors';
@@ -27,8 +28,9 @@ class EditorRevisions extends Component {
 	render = () => {
 		const {
 			authorsIds,
-			postId,
+			diff,
 			nextRevisionId,
+			postId,
 			prevRevisionId,
 			revisions,
 			selectedRevisionId,
@@ -44,12 +46,14 @@ class EditorRevisions extends Component {
 				/>
 				<QueryUsers siteId={ siteId } userIds={ authorsIds } />
 				<EditorDiffViewer
+					diff={ diff }
 					postId={ postId }
 					prevRevisionId={ prevRevisionId }
 					selectedRevisionId={ selectedRevisionId }
 					siteId={ siteId }
 				/>
 				<EditorRevisionsList
+					diff={ diff }
 					postId={ postId }
 					revisions={ revisions }
 					siteId={ siteId }
@@ -64,7 +68,10 @@ class EditorRevisions extends Component {
 EditorRevisions.propTypes = {
 	// connected
 	authorsIds: PropTypes.array.isRequired,
+	diff: PropTypes.object,
+	nextRevisionId: PropTypes.number,
 	postId: PropTypes.number.isRequired,
+	prevRevisionId: PropTypes.number,
 	revisions: PropTypes.array.isRequired,
 	selectedRevisionId: PropTypes.number,
 	siteId: PropTypes.number.isRequired,
@@ -82,12 +89,15 @@ export default flow(
 		const revisions = getPostRevisions( state, siteId, postId, 'display' );
 		const selectedRevisionId = getPostRevisionsSelectedRevisionId( state );
 		const selectedIdIndex = findIndex( revisions, { id: selectedRevisionId } );
+		const nextRevisionId = selectedRevisionId && get( revisions, [ selectedIdIndex - 1, 'id' ] );
+		const prevRevisionId = selectedRevisionId && get( revisions, [ selectedIdIndex + 1, 'id' ] );
 
 		return {
 			authorsIds: getPostRevisionsAuthorsId( state, siteId, postId ),
+			diff: getPostRevisionsDiff( state, siteId, prevRevisionId, selectedRevisionId ),
+			nextRevisionId,
 			postId,
-			nextRevisionId: selectedRevisionId && get( revisions, [ selectedIdIndex - 1, 'id' ] ),
-			prevRevisionId: selectedRevisionId && get( revisions, [ selectedIdIndex + 1, 'id' ] ),
+			prevRevisionId,
 			revisions,
 			selectedRevisionId,
 			siteId,

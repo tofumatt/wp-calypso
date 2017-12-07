@@ -16,11 +16,12 @@ import { head, isEmpty, map } from 'lodash';
 import EditorRevisionsListHeader from './header';
 import EditorRevisionsListItem from './item';
 import { selectPostRevision } from 'state/posts/revisions/actions';
-import { getPostRevision, getPostRevisionsDiff } from 'state/selectors';
+import { getPostRevision } from 'state/selectors';
 import KeyboardShortcuts from 'lib/keyboard-shortcuts';
 
 class EditorRevisionsList extends PureComponent {
 	static propTypes = {
+		diff: PropTypes.object,
 		postId: PropTypes.number,
 		siteId: PropTypes.number,
 		revisions: PropTypes.array.isRequired,
@@ -107,7 +108,7 @@ class EditorRevisionsList extends PureComponent {
 	};
 
 	render() {
-		const { postId, revisions, selectedRevisionId, siteId } = this.props;
+		const { diff, postId, revisions, selectedRevisionId, siteId } = this.props;
 		const classes = classNames( 'editor-revisions-list', {
 			'is-loading': isEmpty( revisions ),
 		} );
@@ -124,6 +125,7 @@ class EditorRevisionsList extends PureComponent {
 							return (
 								<li className={ itemClasses } key={ revision.id }>
 									<EditorRevisionsListItem
+										diff={ diff }
 										postId={ postId }
 										revision={ revision }
 										siteId={ siteId }
@@ -139,9 +141,8 @@ class EditorRevisionsList extends PureComponent {
 }
 
 export default connect(
-	( state, { revisions, prevRevisionId, selectedRevisionId, siteId } ) => {
+	( state, { revisions, selectedRevisionId } ) => {
 		return {
-			diff: getPostRevisionsDiff( state, siteId, prevRevisionId, selectedRevisionId ),
 			revisions,
 			selectedRevision: getPostRevision( state, selectedRevisionId ),
 		};
