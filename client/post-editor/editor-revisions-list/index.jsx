@@ -108,10 +108,16 @@ class EditorRevisionsList extends PureComponent {
 	};
 
 	render() {
-		const { diff, postId, revisions, selectedRevisionId, siteId } = this.props;
+		const { postId, revisions, selectedRevisionId, siteId } = this.props;
 		const classes = classNames( 'editor-revisions-list', {
 			'is-loading': isEmpty( revisions ),
 		} );
+
+		// @TODO build these out of the provided `diff` prop
+		const revisionChanges = {
+			added: 0,
+			removed: 0,
+		};
 
 		return (
 			<div className={ classes }>
@@ -125,9 +131,9 @@ class EditorRevisionsList extends PureComponent {
 							return (
 								<li className={ itemClasses } key={ revision.id }>
 									<EditorRevisionsListItem
-										diff={ diff }
 										postId={ postId }
 										revision={ revision }
+										revisionChanges={ revisionChanges }
 										siteId={ siteId }
 									/>
 								</li>
@@ -141,9 +147,8 @@ class EditorRevisionsList extends PureComponent {
 }
 
 export default connect(
-	( state, { revisions, selectedRevisionId } ) => {
+	( state, { selectedRevisionId } ) => {
 		return {
-			revisions,
 			selectedRevision: getPostRevision( state, selectedRevisionId ),
 		};
 	},

@@ -53,10 +53,8 @@ export const diffs = createReducer(
 			}
 
 			const sitePost = get( state, [ siteId, postId ], {} );
-			sitePost.revisions = {
-				...sitePost.revisions,
-				...revisions,
-			};
+			// @TODO support merging a unique set
+			sitePost.revisions = revisions;
 
 			return {
 				...state,
