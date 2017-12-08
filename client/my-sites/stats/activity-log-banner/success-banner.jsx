@@ -12,6 +12,8 @@ import { localize } from 'i18n-calypso';
  */
 import ActivityLogBanner from './index';
 import Button from 'components/button';
+import HappychatButton from 'components/happychat/button';
+import Gridicon from 'gridicons';
 import TrackComponentView from 'lib/analytics/track-component-view';
 import { recordTracksEvent } from 'state/analytics/actions';
 import { getSiteUrl } from 'state/selectors';
@@ -70,16 +72,27 @@ class SuccessBanner extends PureComponent {
 		} );
 
 	render() {
-		const { applySiteOffset, moment, siteUrl, timestamp, translate, backupUrl } = this.props;
+		const {
+			applySiteOffset,
+			moment,
+			siteUrl,
+			timestamp,
+			translate,
+			backupUrl,
+			trackHappyChatBackup,
+			trackHappyChatRestore,
+		} = this.props;
 		const date = applySiteOffset( moment.utc( ms( timestamp ) ) ).format( 'LLLL' );
 		const params = backupUrl
 			? {
 					title: translate( 'Your backup is now available for download' ),
 					icon: 'cloud-download',
+					trackHappyChat: trackHappyChatBackup,
 				}
 			: {
 					title: translate( 'Your site has been successfully restored' ),
 					icon: 'history',
+					trackHappyChat: trackHappyChatRestore,
 				};
 		return (
 			<ActivityLogBanner
@@ -115,10 +128,20 @@ class SuccessBanner extends PureComponent {
 						{ translate( 'View site' ) }
 					</Button>
 				) }
-				{ '  ' }
 				{ ! backupUrl && (
-					<Button onClick={ this.handleDismiss }>{ translate( 'Thanks, got it!' ) }</Button>
+					<Button className="activity-log-banner__success-gotit" onClick={ this.handleDismiss }>
+						{ translate( 'Thanks, got it!' ) }
+					</Button>
 				) }
+				<HappychatButton
+					className="activity-log-banner__success-happychat activity-log-confirm-dialog__more-info-link"
+					onClick={ params.trackHappyChat }
+				>
+					<Gridicon icon="chat" />
+					<span className="activity-log-banner__success-happychat-text activity-log-confirm-dialog__more-info-link-text">
+						{ translate( 'Get help' ) }
+					</span>
+				</HappychatButton>
 			</ActivityLogBanner>
 		);
 	}
@@ -132,5 +155,7 @@ export default connect(
 		dismissRestoreProgress: dismissRewindRestoreProgress,
 		dismissBackupProgress: dismissRewindBackupProgress,
 		recordTracksEvent: recordTracksEvent,
+		trackHappyChatBackup: () => recordTracksEvent( 'calypso_activitylog_success_banner_backup' ),
+		trackHappyChatRestore: () => recordTracksEvent( 'calypso_activitylog_success_banner_restore' ),
 	}
 )( localize( SuccessBanner ) );
