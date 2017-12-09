@@ -31,6 +31,8 @@ class MediaLibraryExternalHeader extends React.Component {
 		selectedItems: PropTypes.array,
 		onSourceChange: PropTypes.func,
 		sticky: PropTypes.bool,
+		hasAttribution: PropTypes.bool,
+		hasRefreshButton: PropTypes.bool,
 	};
 
 	constructor( props ) {
@@ -122,13 +124,13 @@ class MediaLibraryExternalHeader extends React.Component {
 	}
 
 	renderCard() {
-		const { onMediaScaleChange, translate, canCopy, source } = this.props;
+		const { onMediaScaleChange, translate, canCopy, hasRefreshButton, hasAttribution } = this.props;
 
 		return (
 			<Card className="media-library__header">
-				{ 'pexels' === source && this.renderPexelsAttribution() }
+				{ hasAttribution && this.renderPexelsAttribution() }
 
-				{ 'pexels' !== source && (
+				{ hasRefreshButton && (
 					<Button compact disabled={ this.state.fetching } onClick={ this.handleClick }>
 						<Gridicon icon="refresh" size={ 24 } />
 
